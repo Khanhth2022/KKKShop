@@ -74,10 +74,19 @@
                         <i class="fas fa-map-marker-alt"></i> Hệ thống cửa hàng
                     </a>
                 </div>
-                <div class="col-auto">
-                    <a href="{{ route('viewRegister') }}" class="text-white text-decoration-none me-3">Đăng kí</a>
-                    <span class="text-white me-3">|</span>
-                    <a href="{{ route('viewLogin') }}" class="text-white text-decoration-none">Đăng nhập</a>
+                <div class="col-auto d-flex align-items-center gap-3">
+                    @guest
+                        <a href="{{ route('viewRegister') }}" class="text-white text-decoration-none me-3">Đăng kí</a>
+                        <span class="text-white me-3">|</span>
+                        <a href="{{ route('viewLogin') }}" class="text-white text-decoration-none">Đăng nhập</a>
+                    @else
+                        <a href="{{ route('profile.edit') }}" class="text-white text-decoration-none">Thông tin tài khoản</a>
+                        <span class="text-white me-3"> |</span>
+                         <form method="POST" action="{{ route('logout') }}" class="d-inline-block">
+                             @csrf
+                            <button class="dropdown-item" type="submit">Đăng xuất</button>
+                            </form>
+                    @endguest
                 </div>
             </div>
         </div>
