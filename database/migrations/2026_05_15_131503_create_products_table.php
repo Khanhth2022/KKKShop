@@ -18,10 +18,9 @@ return new class extends Migration
             $table->bigInteger('price');
             $table->bigInteger('old_price')->nullable();
             $table->integer('stock');
-            $table->string('warranty')->nullable();
+            $table->integer('warranty')->nullable();
             $table->string('image')->nullable();
             $table->boolean('is_active')->default(true);
-            $table->boolean('is_builder')->default(false);
             $table->timestamps();
         });
     }

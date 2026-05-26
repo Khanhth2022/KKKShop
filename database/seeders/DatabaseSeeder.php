@@ -2,11 +2,14 @@
 
 namespace Database\Seeders;
 
+use App\Models\Category;
+use App\Models\ComponentProduct;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 
 class DatabaseSeeder extends Seeder
@@ -18,6 +21,15 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        $admin = User::create([
+            'name' => 'Admin User',
+            'email' => 'admin@example.com',
+            'password' => Hash::make('password'),
+            'phone' => '0900000000',
+            'address' => '123 Đường ABC',
+            'city' => 'HN',
+            'role' => 'admin',
+        ]);
         $user = User::updateOrCreate(
             ['email' => 'test@example.com'],
             [
@@ -30,6 +42,38 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
+        $categories = collect([
+            [
+                'name' => 'Gaming PC',
+                'description' => 'Bộ máy tính hoàn chỉnh phục vụ chơi game.',
+            ],
+            [
+                'name' => 'CPU',
+                'description' => 'Bộ vi xử lý cho máy tính.',
+            ],
+            [
+                'name' => 'Mainboard',
+                'description' => 'Bo mạch chủ và linh kiện liên quan.',
+            ],
+            [
+                'name' => 'RAM',
+                'description' => 'Bộ nhớ tạm cho hệ thống.',
+            ],
+            [
+                'name' => 'SSD',
+                'description' => 'Ổ lưu trữ tốc độ cao.',
+            ],
+        ]);
+
+        foreach ($categories as $categoryData) {
+            DB::table('categories')->updateOrInsert(
+                ['name' => $categoryData['name']],
+                ['description' => $categoryData['description']]
+            );
+        }
+
+        $categoryModels = Category::query()->get()->keyBy('name');
+
         $products = collect([
             [
                 'name' => 'PC Gaming Ryzen 5 5600 + RTX 4060',
@@ -37,10 +81,9 @@ class DatabaseSeeder extends Seeder
                 'price' => 22990000,
                 'old_price' => 24990000,
                 'stock' => 8,
-                'warranty' => '36 tháng',
+                'warranty' => 36,
                 'image' => null,
                 'is_active' => true,
-                'is_builder' => false,
             ],
             [
                 'name' => 'CPU Intel Core i7-14700K',
@@ -48,10 +91,9 @@ class DatabaseSeeder extends Seeder
                 'price' => 11290000,
                 'old_price' => null,
                 'stock' => 15,
-                'warranty' => '36 tháng',
+                'warranty' => 36,
                 'image' => null,
                 'is_active' => true,
-                'is_builder' => false,
             ],
             [
                 'name' => 'Mainboard B760M DDR5',
@@ -59,10 +101,9 @@ class DatabaseSeeder extends Seeder
                 'price' => 3890000,
                 'old_price' => 4290000,
                 'stock' => 20,
-                'warranty' => '24 tháng',
+                'warranty' => 24,
                 'image' => null,
                 'is_active' => true,
-                'is_builder' => false,
             ],
             [
                 'name' => 'RAM 32GB DDR5 6000MHz',
@@ -70,10 +111,9 @@ class DatabaseSeeder extends Seeder
                 'price' => 2790000,
                 'old_price' => null,
                 'stock' => 30,
-                'warranty' => '36 tháng',
+                'warranty' => 36,
                 'image' => null,
                 'is_active' => true,
-                'is_builder' => false,
             ],
             [
                 'name' => 'SSD NVMe 1TB Gen4',
@@ -81,10 +121,9 @@ class DatabaseSeeder extends Seeder
                 'price' => 1890000,
                 'old_price' => 2190000,
                 'stock' => 25,
-                'warranty' => '36 tháng',
+                'warranty' => 36,
                 'image' => null,
                 'is_active' => true,
-                'is_builder' => false,
             ],
         ]);
 
@@ -93,7 +132,53 @@ class DatabaseSeeder extends Seeder
                 ['name' => $productData['name']],
                 $productData
             );
-        })->values();
+        })->keyBy('name');
+
+        $categoryAssignments = [
+            'PC Gaming Ryzen 5 5600 + RTX 4060' => ['Gaming PC'],
+            'CPU Intel Core i7-14700K' => ['CPU'],
+            'Mainboard B760M DDR5' => ['Mainboard'],
+            'RAM 32GB DDR5 6000MHz' => ['RAM'],
+            'SSD NVMe 1TB Gen4' => ['SSD'],
+        ];
+
+        foreach ($categoryAssignments as $productName => $categoryNames) {
+            $product = $productModels->get($productName);
+
+            if (! $product) {
+                continue;
+            }
+
+            foreach ($categoryNames as $categoryName) {
+                $categoryModels->get($categoryName)?->products()->syncWithoutDetaching([$product->id]);
+            }
+        }
+
+        $componentRows = [
+            ['parent' => 'PC Gaming Ryzen 5 5600 + RTX 4060', 'child' => 'CPU Intel Core i7-14700K', 'quantity' => 1],
+            ['parent' => 'PC Gaming Ryzen 5 5600 + RTX 4060', 'child' => 'Mainboard B760M DDR5', 'quantity' => 1],
+            ['parent' => 'PC Gaming Ryzen 5 5600 + RTX 4060', 'child' => 'RAM 32GB DDR5 6000MHz', 'quantity' => 1],
+            ['parent' => 'PC Gaming Ryzen 5 5600 + RTX 4060', 'child' => 'SSD NVMe 1TB Gen4', 'quantity' => 1],
+        ];
+
+        foreach ($componentRows as $row) {
+            $parent = $productModels->get($row['parent']);
+            $child = $productModels->get($row['child']);
+
+            if (! $parent || ! $child) {
+                continue;
+            }
+
+            ComponentProduct::updateOrCreate(
+                [
+                    'parent_id' => $parent->id,
+                    'child_id' => $child->id,
+                ],
+                [
+                    'quantity' => $row['quantity'],
+                ]
+            );
+        }
 
         $orders = collect([
             [

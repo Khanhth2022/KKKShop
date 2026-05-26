@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\UserController;
 use GuzzleHttp\Middleware;
@@ -27,5 +28,9 @@ Route::middleware('auth')->group(function (){
     })->name('profile.password.edit');
     Route::get('/orders',[UserController::class,'viewOrders'])->name('orders.index');
 });
-
+Route::middleware(['auth','admin'])->group(function(){
+    //Route::get('/admin/dashboard', [AdminController::class, 'viewDashboard'])->name('admin.dashboard');
+    Route::get('/admin/products/add',[AdminController::class,'addProduct'])->name('admin.add_product');
+    Route::post('/admin/products/store',[AdminController::class,'storeProduct'])->name('admin.store_product');
+});
 

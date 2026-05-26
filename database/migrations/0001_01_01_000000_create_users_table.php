@@ -21,6 +21,7 @@ return new class extends Migration
             $table->string('phone')->nullable();
             $table->string('address')->nullable();
             $table->string('city')->nullable();
+            $table->bigInteger('current_balance')->default(0);
             $table->rememberToken();
             $table->timestamps();
         });
